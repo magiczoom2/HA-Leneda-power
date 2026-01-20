@@ -1,0 +1,13 @@
+{
+  "domain": "leneda_power",
+  "name": "Leneda Power Sensor",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["recorder"],
+  "documentation": "https://github.com/ldotlopez/ha-historical-sensor",
+  "iot_class": "cloud_polling",
+  "requirements": [
+    "homeassistant-historical-sensor>=3.0.0"
+  ],
+  "version": "1.0.0"
+}
