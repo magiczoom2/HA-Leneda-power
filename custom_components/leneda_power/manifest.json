@@ -7,7 +7,7 @@
   "documentation": "https://github.com/ldotlopez/ha-historical-sensor",
   "iot_class": "cloud_polling",
   "requirements": [
-    "homeassistant-historical-sensor>=3.0.0"
+    "homeassistant-historical-sensor==3.0.0a3"
   ],
   "version": "1.0.0"
 }
