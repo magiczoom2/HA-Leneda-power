@@ -17,9 +17,13 @@ from homeassistant.components.recorder.statistics import (
 )
 from homeassistant.util import slugify
 
-from .const import API_BASE_URL, CONF_API_KEY, CONF_ENERGY_ID, CONF_METERING_POINT, CONF_OBIS_CODE
+from .const import (API_BASE_URL, CONF_API_KEY, CONF_ENERGY_ID, 
+                    CONF_METERING_POINT, CONF_OBIS_CODE, 
+                    DEFAULT_POLLING_INTERVAL_HOURS, DEFAULT_POLLING_DAYS_TO_RETRIEVE)
 
 _LOGGER = logging.getLogger(__name__)
+
+SCAN_INTERVAL = timedelta(hours=DEFAULT_POLLING_INTERVAL_HOURS) # Polling interval
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Leneda Power and Energy sensors."""
@@ -31,7 +35,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class LenedaBaseSensor(SensorEntity):
     """Common logic for Leneda API sensors."""
     _attr_has_entity_name = True
-    days_to_pull = 60
+    _attr_should_poll = True
 
     def __init__(self, hass, config):
         self.hass = hass
@@ -70,7 +74,7 @@ class LenedaPowerSensor(LenedaBaseSensor):
 
     async def async_update(self) -> None:
         params = {
-            "startDateTime": (datetime.now(timezone.utc) - timedelta(days=__class__.days_to_pull)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "startDateTime": (datetime.now(timezone.utc) - timedelta(days=DEFAULT_POLLING_DAYS_TO_RETRIEVE)).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "endDateTime": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "obisCode": self._config[CONF_OBIS_CODE],
         }
@@ -98,11 +102,10 @@ class LenedaPowerSensor(LenedaBaseSensor):
         ]
 
         metadata = StatisticMetaData(
-            has_mean=True, has_sum=False, name=self._attr_name,
+            mean_type=StatisticMeanType.ARITHMETIC, has_sum=False, name=self._attr_name,
             source="recorder", statistic_id=self.entity_id,
             unit_of_measurement=self._attr_native_unit_of_measurement,
-            unit_class="power",
-            mean_type=StatisticMeanType.ARITHMETIC
+            unit_class="power"
         )
         async_import_statistics(self.hass, metadata, stats)
 
@@ -118,7 +121,7 @@ class LenedaEnergySensor(LenedaBaseSensor):
         """Fetch hourly aggregated data and import energy statistics."""
         params = {
             "aggregationLevel": "Hour",
-            "startDate": (datetime.now(timezone.utc) - timedelta(days=__class__.days_to_pull)).strftime("%Y-%m-%d"),
+            "startDate": (datetime.now(timezone.utc) - timedelta(days=DEFAULT_POLLING_DAYS_TO_RETRIEVE)).strftime("%Y-%m-%d"),
             "endDate": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "obisCode": self._config[CONF_OBIS_CODE],
             "transformationMode": "Accumulation"
@@ -134,11 +137,10 @@ class LenedaEnergySensor(LenedaBaseSensor):
 
         # 2. Prepare Statistics
         metadata = StatisticMetaData(
-            has_mean=True, has_sum=True, name=self._attr_name,
+            mean_type=StatisticMeanType.ARITHMETIC, has_sum=True, name=self._attr_name,
             source="recorder", statistic_id=self.entity_id,
             unit_of_measurement=self._attr_native_unit_of_measurement,
-            unit_class="energy",
-            mean_type=StatisticMeanType.ARITHMETIC
+            unit_class="energy"
         )
 
         # 3. Handle Cumulative Sum (Vital for Energy Dashboard)
