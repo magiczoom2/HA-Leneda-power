@@ -1,138 +1,196 @@
-"""Leneda Historical Sensors - Power (kW) and Energy (kWh)."""
 import logging
-import statistics
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorDeviceClass,
+    SensorStateClass,
+)
 from homeassistant.const import UnitOfPower, UnitOfEnergy
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.components.recorder.statistics import StatisticData, StatisticMetaData
-
-from homeassistant_historical_sensor import (
-    HistoricalSensor, 
-    HistoricalState, 
-    PollUpdateMixin,
-    group_by_interval
+from homeassistant.components.recorder import get_instance
+from homeassistant.components.recorder.models import StatisticData, StatisticMetaData, StatisticMeanType
+from homeassistant.components.recorder.statistics import (
+    async_import_statistics,
+    get_last_statistics,
+    mean
 )
-from .const import API_BASE_URL, CONF_API_KEY, CONF_ENERGY_ID, CONF_METERING_POINT, CONF_OBIS_CODE, DOMAIN
+from homeassistant.util import slugify
+
+from .const import API_BASE_URL, CONF_API_KEY, CONF_ENERGY_ID, CONF_METERING_POINT, CONF_OBIS_CODE
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up both sensors."""
+    """Set up Leneda Power and Energy sensors."""
     async_add_entities([
-        LenedaHistoricalPowerSensor(hass, entry.data),
-        LenedaHistoricalEnergySensor(hass, entry.data)
+        LenedaPowerSensor(hass, entry.data),
+        LenedaEnergySensor(hass, entry.data)
     ], True)
 
-class LenedaHistoricalBase(PollUpdateMixin, HistoricalSensor, SensorEntity):
-    """Base class for shared API fetching logic."""
+class LenedaBaseSensor(SensorEntity):
+    """Common logic for Leneda API sensors."""
     _attr_has_entity_name = True
-    _poll_interval = timedelta(minutes=15)
+    days_to_pull = 60
 
     def __init__(self, hass, config):
         self.hass = hass
         self._config = config
-        self._attr_historical_states = []
+        # Unique ID can have dots, but entity_id cannot.
+        self._attr_unique_id = f"{config[CONF_METERING_POINT]}_{config[CONF_OBIS_CODE]}_{self.unique_id_suffix}"
+        # Use slugify to ensure dots in OBIS codes become underscores in the entity_id
+        self.entity_id = f"sensor.{slugify(self._attr_unique_id)}"
 
-    async def async_update_historical(self) -> None:
-        """Fetch 15-min data (shared by Power and Energy sensors)."""
+    async def _fetch_from_api(self, path: str, params: dict):
+        """Standardized API fetcher."""
         session = async_get_clientsession(self.hass)
-        end = datetime.now(timezone.utc)
-        start = end - timedelta(days=14)
-        
-        url = f"{API_BASE_URL}/metering-points/{self._config[CONF_METERING_POINT]}/time-series"
-        params = {
-            "startDateTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "endDateTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "obisCode": self._config[CONF_OBIS_CODE],
+        url = f"{API_BASE_URL}/metering-points/{self._config[CONF_METERING_POINT]}/{path}"
+        headers = {
+            "X-API-KEY": self._config[CONF_API_KEY], 
+            "X-ENERGY-ID": self._config[CONF_ENERGY_ID]
         }
-        headers = {"X-API-KEY": self._config[CONF_API_KEY], "X-ENERGY-ID": self._config[CONF_ENERGY_ID]}
-
+        
         try:
             async with session.get(url, params=params, headers=headers, timeout=30) as resp:
                 if resp.status == 200:
                     data = await resp.json()
-                    ts_data = data.get("items", [])
-                    states = []
-                    for item in ts_data:
-                        ts_str = item["startedAt"].replace("Z", "+00:00")
-                        dt = datetime.fromisoformat(ts_str)
-                        states.append(HistoricalState(state=float(item["value"]), timestamp=dt.timestamp()))
-                    self._attr_historical_states = states
+                    return data
+                _LOGGER.error("Leneda API returned status %s for %s", resp.status, path)
         except Exception as err:
-            _LOGGER.error("Leneda API error: %s", err)
+            _LOGGER.error("Error fetching Leneda data from %s: %s", path, err)
+        return []
 
-class LenedaHistoricalPowerSensor(LenedaHistoricalBase):
-    """kW Power Sensor - Represents the average load per hour."""
+class LenedaPowerSensor(LenedaBaseSensor):
+    """15-minute Power sensor (kW) - Aggregated to Hourly for Statistics."""
     _attr_name = "Power Demand"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    unique_id_suffix = "pwr_15min"
 
-    def __init__(self, hass, config):
-        super().__init__(hass, config)
-        self._attr_unique_id = f"{config[CONF_METERING_POINT]}_{config[CONF_OBIS_CODE]}_pwr_hourly"
+    async def async_update(self) -> None:
+        params = {
+            "startDateTime": (datetime.now(timezone.utc) - timedelta(days=__class__.days_to_pull)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "endDateTime": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "obisCode": self._config[CONF_OBIS_CODE],
+        }
+        
+        data = await self._fetch_from_api("time-series", params)
+        items = data.get("items", [])
+        if not items:
+            return
+        # self._attr_native_value = float(items[-1]["value"])
 
-    def get_statistic_metadata(self) -> StatisticMetaData:
-        meta = super().get_statistic_metadata()
-        meta["has_mean"] = True
-        meta["has_sum"] = False
-        return meta
+        # Group 15-min items by Hour (Required by HA Statistics)
+        hourly_data = {}
+        for i in items:
+            dt = datetime.fromisoformat(i["startedAt"].replace("Z", "+00:00"))
+            hour_ts = dt.replace(minute=0, second=0, microsecond=0)
+            if hour_ts not in hourly_data: hourly_data[hour_ts] = []
+            hourly_data[hour_ts].append(float(i["value"]))
 
-    async def async_calculate_statistic_data(self, hist_states, *, latest=None) -> list[StatisticData]:
-        ret = []
-        for block_ts, collection_it in group_by_interval(hist_states, granularity=3600):
-            collection = list(collection_it)
-            if not collection: continue
-            mean = statistics.mean([x.state for x in collection])
-            ret.append(
-                StatisticData(
-                    start=datetime.fromtimestamp(block_ts, tz=timezone.utc), 
-                    state=mean,
-                    mean=mean
-                )
-            )
-        return ret
+        stats = [
+            StatisticData(
+                start=ts,
+                state=mean(vals), mean=mean(vals),
+                min=min(vals), max=max(vals)
+            ) for ts, vals in hourly_data.items()
+        ]
 
-class LenedaHistoricalEnergySensor(LenedaHistoricalBase):
-    """kWh Energy Sensor - For the Home Assistant Energy Dashboard."""
+        metadata = StatisticMetaData(
+            has_mean=True, has_sum=False, name=self._attr_name,
+            source="recorder", statistic_id=self.entity_id,
+            unit_of_measurement=self._attr_native_unit_of_measurement,
+            unit_class="power",
+            mean_type=StatisticMeanType.ARITHMETIC
+        )
+        async_import_statistics(self.hass, metadata, stats)
+
+class LenedaEnergySensor(LenedaBaseSensor):
+    """Hourly Aggregated Energy sensor (kWh)."""
     _attr_name = "Energy Consumption"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    unique_id_suffix = "energy_hourly"
 
-    def __init__(self, hass, config):
-        super().__init__(hass, config)
-        self._attr_unique_id = f"{config[CONF_METERING_POINT]}_{config[CONF_OBIS_CODE]}_energy_hourly"
+    async def async_update(self) -> None:
+        """Fetch hourly aggregated data and import energy statistics."""
+        params = {
+            "aggregationLevel": "Hour",
+            "startDate": (datetime.now(timezone.utc) - timedelta(days=__class__.days_to_pull)).strftime("%Y-%m-%d"),
+            "endDate": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "obisCode": self._config[CONF_OBIS_CODE],
+            "transformationMode": "Accumulation"
+        }
 
-    def get_statistic_metadata(self) -> StatisticMetaData:
-        meta = super().get_statistic_metadata()
-        meta["has_mean"] = True
-        meta["has_sum"] = True
-        return meta
+        data = await self._fetch_from_api("time-series/aggregated", params)
+        items = data.get("aggregatedTimeSeries", [])
+        if not items:
+            return
 
-    async def async_calculate_statistic_data(self, hist_states, *, latest=None) -> list[StatisticData]:
-        # Start from the last sum recorded in the DB
-        accumulated = latest["sum"] if latest else 0
-        ret = []
+        # 1. Update live sensor state
+        # self._attr_native_value = float(items[-1]["value"])
+
+        # 2. Prepare Statistics
+        metadata = StatisticMetaData(
+            has_mean=True, has_sum=True, name=self._attr_name,
+            source="recorder", statistic_id=self.entity_id,
+            unit_of_measurement=self._attr_native_unit_of_measurement,
+            unit_class="energy",
+            mean_type=StatisticMeanType.ARITHMETIC
+        )
+
+        # 3. Handle Cumulative Sum (Vital for Energy Dashboard)
+        # We fetch the last sum from the DB so we can continue the sequence
+
+        recorder = get_instance(self.hass)
+
+        # --- 1. Get last SUM ---
+        last_sum_stats = await recorder.async_add_executor_job(
+            get_last_statistics, self.hass, 1, self.entity_id, True, "sum"
+        )
+
+        running_sum = 0.0
+        if last_sum_stats and self.entity_id in last_sum_stats:
+            running_sum = last_sum_stats[self.entity_id][0].get("sum") or 0.0
+
+        # --- 2. Get last TIMESTAMP ---
+        last_state_stats = await recorder.async_add_executor_job(
+            get_last_statistics, self.hass, 1, self.entity_id, True, "state"
+        )
+
+        last_time = None
+        if last_state_stats and self.entity_id in last_state_stats:
+            last_time = last_state_stats[self.entity_id][0]["start"]
         
-        # We MUST sort states to build the sum correctly
-        sorted_states = sorted(hist_states, key=lambda x: x.timestamp)
+        if isinstance(last_time, (int, float)):
+            last_time = datetime.fromtimestamp(last_time, tz=timezone.utc)
 
-        for block_ts, collection_it in group_by_interval(sorted_states, granularity=3600):
-            collection = list(collection_it)
-            if not collection: continue
+        # --- 3. Build new statistics ---
+        stat_data = []
 
-            # Hourly Energy (kWh) = Average Power (kW) * 1 Hour
-            hourly_energy = statistics.mean([x.state for x in collection])
-            accumulated += hourly_energy
+        for item in items:
+            item_time = datetime.fromisoformat(item["startedAt"].replace("Z", "+00:00"))
 
-            ret.append(
+            # Prevent double-counting
+            if last_time and item_time <= last_time:
+                continue
+
+            val = float(item["value"])
+            running_sum += val
+
+            stat_data.append(
                 StatisticData(
-                    start=datetime.fromtimestamp(block_ts, tz=timezone.utc),
-                    state=hourly_energy,
-                    sum=accumulated,
-                    mean=hourly_energy
+                    start=item_time,
+                    state=val,
+                    mean=val,
+                    min=val,
+                    max=val,
+                    sum=running_sum
                 )
             )
-        return ret
+
+        # --- 4. Import & update sensor ---
+        if stat_data:
+            async_import_statistics(self.hass, metadata, stat_data)

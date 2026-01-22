@@ -4,10 +4,8 @@
   "codeowners": [],
   "config_flow": true,
   "dependencies": ["recorder"],
-  "documentation": "https://github.com/ldotlopez/ha-historical-sensor",
+  "documentation": "",
   "iot_class": "cloud_polling",
-  "requirements": [
-    "homeassistant-historical-sensor==3.0.0a3"
-  ],
+  "requirements": [],
   "version": "1.0.0"
 }
