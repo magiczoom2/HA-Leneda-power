@@ -1,10 +1,11 @@
 {
   "domain": "leneda_power",
-  "name": "Leneda Power Sensor",
-  "codeowners": [],
+  "name": "Leneda Power",
   "config_flow": true,
   "dependencies": ["recorder"],
-  "documentation": "",
+  "documentation": "https://github.com/magiczoom2/HA-Leneda-power",
+  "issue_tracker": "https://github.com/magiczoom2/HA-Leneda-power/issues",
+  "codeowners": ["@magiczoom2"],
   "iot_class": "cloud_polling",
   "requirements": [],
   "version": "1.0.0"
