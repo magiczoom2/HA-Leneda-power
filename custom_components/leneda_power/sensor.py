@@ -137,7 +137,7 @@ class LenedaEnergySensor(LenedaBaseSensor):
 
         # 2. Prepare Statistics
         metadata = StatisticMetaData(
-            has_sum=True, name=self._attr_name,
+            mean_type=StatisticMeanType.NONE, has_sum=True, name=self._attr_name,
             source="recorder", statistic_id=self.entity_id,
             unit_of_measurement=self._attr_native_unit_of_measurement,
             unit_class="energy"
@@ -150,7 +150,7 @@ class LenedaEnergySensor(LenedaBaseSensor):
 
         # --- 1. Get last SUM ---
         last_sum_stats = await recorder.async_add_executor_job(
-            get_last_statistics, self.hass, 1, self.entity_id, True, "sum"
+            get_last_statistics, self.hass, 1, self.entity_id, True, {"sum"}
         )
 
         running_sum = 0.0
@@ -159,7 +159,7 @@ class LenedaEnergySensor(LenedaBaseSensor):
 
         # --- 2. Get last TIMESTAMP ---
         last_state_stats = await recorder.async_add_executor_job(
-            get_last_statistics, self.hass, 1, self.entity_id, True, "state"
+            get_last_statistics, self.hass, 1, self.entity_id, True, {"state"}
         )
 
         last_time = None
