@@ -80,7 +80,7 @@ class LenedaBaseSensor(SensorEntity):
 
         return fetch_days
 
-    async def _fetch_from_api(self, path: str, params: dict[str, Any]) -> dict | list:
+    async def _fetch_from_api(self, path: str, params: dict[str, Any]) -> dict:
         """Standardized API fetcher."""
         session = async_get_clientsession(self.hass)
         url = f"{API_BASE_URL}/metering-points/{self._config[CONF_METERING_POINT]}/{path}"
@@ -97,7 +97,7 @@ class LenedaBaseSensor(SensorEntity):
                 _LOGGER.error("Leneda API returned status %s for %s", resp.status, path)
         except Exception as err:
             _LOGGER.error("Error fetching Leneda data from %s: %s", path, err)
-        return []
+        return {}
 
 class LenedaPowerSensor(LenedaBaseSensor):
     """15-minute Power sensor (kW) - Aggregated to Hourly for Statistics."""
