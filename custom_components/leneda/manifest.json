@@ -1,5 +1,5 @@
 {
-  "domain": "leneda_power",
+  "domain": "leneda",
   "name": "Leneda Power",
   "codeowners": ["@magiczoom2"],
   "config_flow": true,

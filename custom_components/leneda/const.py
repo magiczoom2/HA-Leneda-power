@@ -1,5 +1,5 @@
 """Constants for the Leneda Power integration."""
-DOMAIN = "leneda_power"
+DOMAIN = "leneda"
 CONF_METERING_POINT = "metering_point"
 CONF_ENERGY_ID = "energy_id"
 CONF_API_KEY = "api_key"
