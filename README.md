@@ -41,7 +41,7 @@ The power and energy sensors data can be visualized using [Statistics Graph Card
 ### Manual Installation
 
 1. Download the latest release from the [Releases](https://github.com/magiczoom2/HA-Leneda-power/releases) page.
-2. Copy the `custom_components/leneda_power` folder to your Home Assistant `config/custom_components/` directory.
+2. Copy the `custom_components/leneda` folder to your Home Assistant `config/custom_components/` directory.
 3. Restart Home Assistant.
 4. Go to **Settings** → **Devices & Services** → **+ Add Integration** and search for **Leneda Power**.
 
