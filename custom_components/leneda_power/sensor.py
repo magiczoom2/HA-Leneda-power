@@ -73,6 +73,7 @@ class LenedaBaseSensor(SensorEntity):
         last_timestamp = await self.get_last_timestamp()
         if last_timestamp:
             days_since_last = (dt_util.now(dt_util.UTC) - last_timestamp).days
+            days_since_last += 1
             fetch_days = max(days_since_last, API_MIN_DAYS_TO_FETCH)
         else:
             fetch_days = initial_setup_days
