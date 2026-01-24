@@ -1,5 +1,9 @@
 ![Release](https://img.shields.io/github/release/magiczoom2/HA-Leneda-power.svg)
-
+---
+```
+Disclaimer: This is an unofficial custom integration. This project is not affiliated with, endorsed by, or associated with Leneda, Creos, Enovos, or Home Assistant. All product names, logos, and brands are property of their respective owners.
+```
+---
 # <img src="docs/leneda_icon.svg" alt="Description" width="20" height="20"> <img src="docs/home-assistant-logomark-color-on-light.svg" alt="Description" width="20" height="20"> Leneda
 A small 
 <img src="docs/home-assistant-logomark-color-on-light.svg" alt="Description" width="10" height="10"> 
@@ -54,9 +58,3 @@ When adding the integration you will be prompted for the following values:
 - **Optional**
   - `days_to_fetch_during_initial_setup` — number of past days of historical data to download during initial setup (integer, default: `180` days). 
   - `obis_code` — [OBIS code](https://www.leneda.lu/en/docs/obis-code-meaning) to read (default: `1-1:1.29.0`).
-
----
-```
-Disclaimer: This is an unofficial custom integration. This project is not affiliated with, endorsed by, or associated with Leneda, Creos, Enovos, or Home Assistant. All product names, logos, and brands are property of their respective owners.
-```
----
