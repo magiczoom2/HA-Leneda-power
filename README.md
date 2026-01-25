@@ -10,16 +10,6 @@ A small
 Home Assistant integration that imports electric power and energy statistics from the 
 <img src="docs/leneda_icon.svg" alt="Description" width="10" height="10"> 
 [Leneda API](https://www.leneda.lu/en/docs/api-reference) and exposes them as sensors with recorder statistics.
-
-- [  Leneda](#--leneda)
-  - [Installation](#installation)
-  - [Features](#features)
-    - [Sensors](#sensors)
-    - [Energy Dashboard](#energy-dashboard)
-    - [Statistics Graph Card](#statistics-graph-card)
-  - [Other Installation Methods](#other-installation-methods)
-    - [HACS Installation - Custom Repository](#hacs-installation---custom-repository)
-    - [Manual Installation](#manual-installation)
   
 ## Installation
 **HACS (Home Assistant Community Store)**
