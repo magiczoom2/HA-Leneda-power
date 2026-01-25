@@ -12,15 +12,32 @@ Home Assistant integration that imports electric power and energy statistics fro
 [Leneda API](https://www.leneda.lu/en/docs/api-reference) and exposes them as sensors with recorder statistics.
 
 - [  Leneda](#--leneda)
+  - [Installation](#installation)
   - [Features](#features)
     - [Sensors](#sensors)
     - [Energy Dashboard](#energy-dashboard)
     - [Statistics Graph Card](#statistics-graph-card)
-  - [Installation](#installation)
-    - [HACS Installation (Recommended)](#hacs-installation-recommended)
+  - [Other Installation Methods](#other-installation-methods)
     - [HACS Installation - Custom Repository](#hacs-installation---custom-repository)
     - [Manual Installation](#manual-installation)
-  - [Configuration options](#configuration-options)
+  
+## Installation
+**HACS (Home Assistant Community Store)**
+1. **Download via HACS**   
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=magiczoom2&repository=HA-Leneda-power&category=integration)
+2. **Restart Home Assistant!**
+3. **Configure Integration**   
+   [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=leneda)
+
+When adding the integration you will be prompted for the following values:
+- **Required** Get from your [Leneda profile](https://app.leneda.eu/my-profile)
+  - `metering_point` — your Leneda metering point identifier.
+  - `energy_id` — your Leneda energy identifier.
+  - `api_key` — Leneda API key. [How to get an API key?](https://www.leneda.lu/en/docs/how-to-generate-and-manage-api-keys)
+- **Optional**
+  - `days_to_fetch_during_initial_setup` — number of past days of historical data to download during initial setup (integer, default: `180` days). 
+  - `obis_code` — [OBIS code](https://www.leneda.lu/en/docs/obis-code-meaning) to read (default: `1-1:1.29.0`).
+![](./docs/configuration.png)
 
 ## Features
 ### Sensors
@@ -35,13 +52,7 @@ The power and energy sensors can be connected to the [Energy Dashboard](https://
 The power and energy sensors data can be visualized using [Statistics Graph Card](https://www.home-assistant.io/dashboards/statistics-graph/)
 ![energy dashboard](./docs/statistics_graph_card.png)
 
-## Installation
-### HACS Installation (Recommended)
-1. **Download via HACS**   
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=magiczoom2&repository=HA-Leneda-power&category=integration)
-2. **Restart Home Assistant!**
-3. **Configure Integration**.   
-   [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=leneda)
+## Other Installation Methods
 
 ### HACS Installation - Custom Repository
 1. Open **HACS** → **⋮** → **Custom repositories** (See [HACS Custom Repositories](https://hacs.xyz/docs/faq/custom_repositories/))
@@ -56,13 +67,3 @@ The power and energy sensors data can be visualized using [Statistics Graph Card
 2. Copy the `custom_components/leneda` folder to your Home Assistant `config/custom_components/` directory.
 3. Restart Home Assistant.
 4. Go to **Settings** → **Devices & Services** → **+ Add Integration** and search for **Leneda**.
-
-## Configuration options
-When adding the integration you will be prompted for the following values:
-- **Required** Get from your [Leneda profile](https://app.leneda.eu/my-profile)
-  - `metering_point` — your Leneda metering point identifier.
-  - `energy_id` — your Leneda energy identifier.
-  - `api_key` — Leneda API key. [How to get an API key?](https://www.leneda.lu/en/docs/how-to-generate-and-manage-api-keys)
-- **Optional**
-  - `days_to_fetch_during_initial_setup` — number of past days of historical data to download during initial setup (integer, default: `180` days). 
-  - `obis_code` — [OBIS code](https://www.leneda.lu/en/docs/obis-code-meaning) to read (default: `1-1:1.29.0`).
