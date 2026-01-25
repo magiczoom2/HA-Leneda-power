@@ -18,6 +18,7 @@ Home Assistant integration that imports electric power and energy statistics fro
     - [Statistics Graph Card](#statistics-graph-card)
   - [Installation](#installation)
     - [HACS Installation (Recommended)](#hacs-installation-recommended)
+    - [HACS Installation - Custom Repository](#hacs-installation---custom-repository)
     - [Manual Installation](#manual-installation)
   - [Configuration options](#configuration-options)
 
@@ -36,11 +37,18 @@ The power and energy sensors data can be visualized using [Statistics Graph Card
 
 ## Installation
 ### HACS Installation (Recommended)
+1. **Download via HACS**   
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=magiczoom2&repository=HA-Leneda-power&category=integration)
+2. **Restart Home Assistant!**
+3. **Configure Integration**.   
+   [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=leneda)
+
+### HACS Installation - Custom Repository
 1. Open **HACS** → **⋮** → **Custom repositories** (See [HACS Custom Repositories](https://hacs.xyz/docs/faq/custom_repositories/))
 2. Add repository URL `https://github.com/magiczoom2/HA-Leneda-power` and set category to **Integration**, then click **Add**.
-3. In HACS search for **Leneda**, click **Download**, then restart Home Assistant.
-4. Go to **Settings** → **Devices & Services** → **+ Add Integration** and search for **Leneda**.
-
+3. In HACS search for **Leneda**, click **Download**.
+4. Restart Home Assistant.
+5. Go to **Settings** → **Devices & Services** → **+ Add Integration** and search for **Leneda**.
 
 ### Manual Installation
 
