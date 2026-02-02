@@ -6,13 +6,24 @@
 Disclaimer: This is an unofficial custom integration. This project is not affiliated with, endorsed by, or associated with Leneda, Creos, Enovos, or Home Assistant. All product names, logos, and brands are property of their respective owners.
 ```
 ---
-# <img src="docs/leneda_icon.svg" alt="Description" width="20" height="20"> <img src="docs/home-assistant-logomark-color-on-light.svg" alt="Description" width="20" height="20"> Leneda
-A small 
-<img src="docs/home-assistant-logomark-color-on-light.svg" alt="Description" width="10" height="10"> 
-Home Assistant integration that imports electric power and energy statistics from the 
+# <img src="docs/leneda_icon.svg" alt="Description" width="20" height="20"> <img src="docs/home-assistant-logomark-color-on-light.svg" alt="Description" width="20" height="20"> [Leneda Power](https://github.com/magiczoom2/HA-Leneda-Power)
+**A Home Assistant Integration** that imports electric power and energy statistics from the 
 <img src="docs/leneda_icon.svg" alt="Description" width="10" height="10"> 
-[Leneda API](https://www.leneda.lu/en/docs/api-reference) and exposes them as sensors with recorder statistics.
-  
+[Leneda API](https://www.leneda.lu/en/docs/api-reference) of Luxembourg energy providers and exposes them as sensors with statistics.
+
+## Features
+### Sensors
+- `Power Demand` sensor — electric power measurements (kW) aggregated to hourly statistics with value, min, max and mean.
+- `Energy Consumption` sensor — electric energy measurements (kWh) aggregated to hourly statistics with cumulative sum and value.
+
+### Energy Dashboard
+The power and energy sensors can be connected to the [Energy Dashboard](https://www.home-assistant.io/dashboards/energy/)
+![energy dashboard](./docs/energy_dashboard.png)
+
+### Statistics Graph Card
+The power and energy sensors data can be visualized using [Statistics Graph Card](https://www.home-assistant.io/dashboards/statistics-graph/)
+![energy dashboard](./docs/statistics_graph_card.png)
+
 ## Installation
 **HACS (Home Assistant Community Store)**
 1. **Download via HACS**   
@@ -31,30 +42,7 @@ When adding the integration you will be prompted for the following values:
   - `obis_code` — [OBIS code](https://www.leneda.lu/en/docs/obis-code-meaning) to read (default: `1-1:1.29.0`).
 ![](./docs/configuration.png)
 
-## Features
-### Sensors
-- `Power Demand` sensor — electric power measurements (kW) aggregated to hourly statistics with value, min, max and mean.
-- `Energy Consumption` sensor — electric energy measurements (kWh) aggregated to hourly statistics with cumulative sum and value.
-
-### Energy Dashboard
-The power and energy sensors can be connected to the [Energy Dashboard](https://www.home-assistant.io/dashboards/energy/)
-![energy dashboard](./docs/energy_dashboard.png)
-
-### Statistics Graph Card
-The power and energy sensors data can be visualized using [Statistics Graph Card](https://www.home-assistant.io/dashboards/statistics-graph/)
-![energy dashboard](./docs/statistics_graph_card.png)
-
-## Other Installation Methods
-
-### HACS Installation - Custom Repository
-1. Open **HACS** → **⋮** → **Custom repositories** (See [HACS Custom Repositories](https://hacs.xyz/docs/faq/custom_repositories/))
-2. Add repository URL `https://github.com/magiczoom2/HA-Leneda-power` and set category to **Integration**, then click **Add**.
-3. In HACS search for **Leneda**, click **Download**.
-4. Restart Home Assistant.
-5. Go to **Settings** → **Devices & Services** → **+ Add Integration** and search for **Leneda**.
-
-### Manual Installation
-
+## Manual Installation
 1. Download the latest release from the [Releases](https://github.com/magiczoom2/HA-Leneda-power/releases) page.
 2. Copy the `custom_components/leneda` folder to your Home Assistant `config/custom_components/` directory.
 3. Restart Home Assistant.
