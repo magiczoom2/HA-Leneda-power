@@ -1,4 +1,6 @@
 ![Release](https://img.shields.io/github/release/magiczoom2/HA-Leneda-power.svg)
+![Active Installations](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Active%20Installs&query=$.leneda.total&url=https://analytics.home-assistant.io/custom_integrations.json)
+
 ---
 ```
 Disclaimer: This is an unofficial custom integration. This project is not affiliated with, endorsed by, or associated with Leneda, Creos, Enovos, or Home Assistant. All product names, logos, and brands are property of their respective owners.
