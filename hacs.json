@@ -2,5 +2,7 @@
   "name": "Leneda",
   "homeassistant": "2026.1.0",
   "render_readme": true,
-  "country": "LU"
+  "country": "LU",
+  "zip_releases": true,
+  "filename": "leneda.zip"
 }

@@ -1,0 +1,25 @@
+name: Release Leneda Asset
+
+on:
+  release:
+    types: [published, prereleased]
+
+permissions:
+  contents: write
+
+jobs:
+  zip-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create leneda.zip from Repo
+        run: |
+          # Creates a zip of the current HEAD, excluding .git files
+          git archive --format=zip HEAD > leneda.zip
+
+      - name: Upload leneda.zip to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: leneda.zip
