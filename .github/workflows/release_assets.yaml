@@ -2,7 +2,7 @@ name: Release Leneda Asset
 
 on:
   release:
-    types: [published, prereleased]
+    types: [published]
 
 permissions:
   contents: write
