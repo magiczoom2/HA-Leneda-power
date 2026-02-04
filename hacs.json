@@ -3,6 +3,6 @@
   "homeassistant": "2026.1.0",
   "render_readme": true,
   "country": "LU",
-  "zip_releases": true,
+  "zip_release": true,
   "filename": "leneda.zip"
 }
