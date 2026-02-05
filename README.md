@@ -1,6 +1,6 @@
 ![Release](https://img.shields.io/github/release/magiczoom2/HA-Leneda-power.svg)
-![Active Installations](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Active%20Installs&query=$.leneda.total&url=https://analytics.home-assistant.io/custom_integrations.json)
 ![Total](https://img.shields.io/github/downloads/magiczoom2/HA-Leneda-power/total?color=41BDF5)
+![Active Installations](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=HA%20Analytics&query=$.leneda.total&url=https://analytics.home-assistant.io/custom_integrations.json)
 
 ---
 ```
