@@ -22,7 +22,8 @@ For example, the default OBIS code `1-1:1.29.0` shows electricity consumption as
 - `Active Energy Consumption` sensor — electric energy measurements (kWh) aggregated to hourly statistics with cumulative sum and value.
 ### Multiple Entries (Metering points and OBIS Codes)
 You can configure multiple entries per combination of metering point and [OBIS code](https://www.leneda.lu/en/docs/obis-code-meaning). Depending on what OBIS codes your Leneda metering point provides, your sensors can be for:
-- Electricity energy (kWh) and power (kW) consumption or production
+- Electricity energy (kWh) and power (kW) consumption 
+- Electricity energy (kWh) and power (kW) production
 - Gas volume (m³) consumption
 
 ![Multiple entries](./docs//multiple%20entries.png)
