@@ -4,13 +4,11 @@ from typing import Any
 
 from homeassistant.components.sensor import (
     SensorEntity,
-    SensorDeviceClass,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.const import UnitOfPower, UnitOfEnergy
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.models import StatisticData, StatisticMetaData, StatisticMeanType
@@ -25,7 +23,8 @@ from .const import (API_BASE_URL, CONF_API_KEY, CONF_ENERGY_ID,
                     CONF_METERING_POINT, CONF_OBIS_CODE,
                     CONF_INITIAL_SETUP_DAYS_TO_FETCH,
                     API_MAX_DAYS_TO_FETCH, API_MIN_DAYS_TO_FETCH,
-                    POLLING_INTERVAL_HOURS)
+                    POLLING_INTERVAL_HOURS, 
+                    OBIS_HA_MAP, DEFAULT_OBIS_CODE)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,14 +33,15 @@ SCAN_INTERVAL = timedelta(hours=POLLING_INTERVAL_HOURS)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up Leneda Power and Energy sensors."""
     async_add_entities([
-        LenedaPowerSensor(hass, entry.data),
-        LenedaEnergySensor(hass, entry.data)
+        LenedaMeteringSensor(hass, entry.data),
+        LenedaAggregatedMeteringSensor(hass, entry.data)
     ], True)
 
 class LenedaBaseSensor(SensorEntity):
     """Common logic for Leneda API sensors."""
     _attr_has_entity_name = True
     _attr_should_poll = True
+    _attr_suggested_display_precision = 3
 
     def __init__(self, hass: HomeAssistant, config: dict[str, Any]) -> None:
         self.hass = hass
@@ -99,13 +99,23 @@ class LenedaBaseSensor(SensorEntity):
             _LOGGER.error("Error fetching Leneda data from %s: %s", path, err)
         return {}
 
-class LenedaPowerSensor(LenedaBaseSensor):
-    """15-minute Power sensor (kW) - Aggregated to Hourly for Statistics."""
-    _attr_name = "Power Demand"
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
+class LenedaMeteringSensor(LenedaBaseSensor):
+    """15-minute metering data sensor (kW) - Aggregated to Hourly for Statistics."""
     unique_id_suffix = "pwr_15min"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, hass, config):
+        obis_code = config.get(CONF_OBIS_CODE, DEFAULT_OBIS_CODE)
+        mapping = OBIS_HA_MAP.get(obis_code, OBIS_HA_MAP[DEFAULT_OBIS_CODE])
+        self._attr_name = mapping["name"]
+        self._attr_native_unit_of_measurement = mapping["unit"]
+        self._attr_device_class = mapping["device_class"]
+        self._attr_extra_state_attributes = {
+            "obis_code": obis_code,
+            "description": mapping["description"],
+            "service_type": mapping["service_type"]
+        }
+        super().__init__(hass, config)
 
     async def async_update(self) -> None:
         fetch_days = await self.get_days_to_fetch()
@@ -127,7 +137,7 @@ class LenedaPowerSensor(LenedaBaseSensor):
             if chunk_items:
                 items.extend(chunk_items)
 
-        _LOGGER.info(f"Leneda Power Sensor fetched {len(items)} items")
+        _LOGGER.info(f"Leneda Sensor fetched {len(items)} items")
 
         if not items:
             return
@@ -156,17 +166,27 @@ class LenedaPowerSensor(LenedaBaseSensor):
             mean_type=StatisticMeanType.ARITHMETIC, has_sum=False, name=self._attr_name,
             source="recorder", statistic_id=self.entity_id,
             unit_of_measurement=self._attr_native_unit_of_measurement,
-            unit_class="power"
+            unit_class=self._attr_device_class
         )
         async_import_statistics(self.hass, metadata, stats)
 
-class LenedaEnergySensor(LenedaBaseSensor):
-    """Hourly Aggregated Energy sensor (kWh)."""
-    _attr_name = "Energy Consumption"
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+class LenedaAggregatedMeteringSensor(LenedaBaseSensor):
+    """Hourly Aggregated metering data sensor."""
     unique_id_suffix = "energy_hourly"
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, hass, config):
+        obis_code = config.get(CONF_OBIS_CODE, DEFAULT_OBIS_CODE)
+        mapping = OBIS_HA_MAP.get(obis_code, OBIS_HA_MAP[DEFAULT_OBIS_CODE])
+        self._attr_name = mapping["aggregated_name"]
+        self._attr_native_unit_of_measurement = mapping["aggregation_unit"]
+        self._attr_device_class = mapping["aggregation_device_class"]
+        self._attr_extra_state_attributes = {
+            "obis_code": obis_code,
+            "description": mapping["description"],
+            "service_type": mapping["service_type"]
+        }
+        super().__init__(hass, config)
 
     async def async_update(self) -> None:
         """Fetch hourly aggregated data and import energy statistics."""
@@ -191,7 +211,7 @@ class LenedaEnergySensor(LenedaBaseSensor):
             if chunk_items:
                 items.extend(chunk_items)
 
-        _LOGGER.info(f"Leneda Energy Sensor fetched {len(items)} items")
+        _LOGGER.info(f"Leneda Aggregated Sensor fetched {len(items)} items")
 
         if not items:
             return
@@ -204,7 +224,7 @@ class LenedaEnergySensor(LenedaBaseSensor):
             mean_type=StatisticMeanType.NONE, has_sum=True, name=self._attr_name,
             source="recorder", statistic_id=self.entity_id,
             unit_of_measurement=self._attr_native_unit_of_measurement,
-            unit_class="energy"
+            unit_class=self._attr_device_class
         )
 
         # 3. Handle Cumulative Sum (Vital for Energy Dashboard)
