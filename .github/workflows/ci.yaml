@@ -7,7 +7,6 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
-# Best practice: Limit permissions to read-only for security
 permissions:
   contents: read
 
@@ -16,13 +15,14 @@ jobs:
     name: Validate with hassfest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: home-assistant/actions/hassfest@master
 
   validate-hacs:
     name: HACS Validation
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: HACS validation
         uses: hacs/action@main
         with:

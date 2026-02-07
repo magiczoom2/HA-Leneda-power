@@ -9,28 +9,39 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write # Required for the PR coverage comment
 
 jobs:
   tests:
-    name: Run Tests with Coverage
+    name: Run PyTest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+          cache: 'pip' # <--- This enables caching for dependencies
+          cache-dependency-path: 'requirements-test.txt'
       
       - name: Install dependencies
         run: |
           pip install -r requirements-test.txt
-      
       - name: Run tests with coverage
         run: |
-          pytest --cov=custom_components/leneda --cov-report=html
-      
+          pytest --cov=custom_components/leneda \
+                 --cov-report=html
+                 | tee pytest-coverage.txt
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          echo "### Code Coverage" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat pytest-coverage.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload coverage artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: html-coverage-report
