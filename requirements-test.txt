@@ -1,4 +1,4 @@
+homeassistant>=2026.2.1
 pytest
 pytest-asyncio
 pytest-cov
-homeassistant
