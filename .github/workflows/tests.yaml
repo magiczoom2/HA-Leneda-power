@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.14"
       
@@ -28,11 +28,11 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          pytest --cov=custom_components/leneda --cov-report=xml --cov-report=term-missing
+          pytest --cov=custom_components/leneda --cov-report=html
       
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
-          verbose: true
+          name: html-coverage-report
+          path: htmlcov/
+          retention-days: 5
